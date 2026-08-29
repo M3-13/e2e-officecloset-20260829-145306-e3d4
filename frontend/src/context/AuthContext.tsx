@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import * as api from '../api'
 import type { UserOut } from '../api'
 
 export interface AuthContextValue {
@@ -12,19 +13,43 @@ export interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user] = useState<UserOut | null>(null)
-  const [loading] = useState<boolean>(false)
+  const [user, setUser] = useState<UserOut | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
-  const login = async (_email: string, _password: string): Promise<void> => {
-    throw new Error('not implemented')
+  useEffect(() => {
+    let cancelled = false
+    api
+      .me()
+      .then(({ user: current }) => {
+        if (!cancelled) setUser(current)
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const login = async (email: string, password: string): Promise<void> => {
+    const { user: current } = await api.login(email, password)
+    setUser(current)
   }
 
-  const register = async (_email: string, _password: string): Promise<void> => {
-    throw new Error('not implemented')
+  const register = async (email: string, password: string): Promise<void> => {
+    const { user: current } = await api.register(email, password)
+    setUser(current)
   }
 
   const logout = async (): Promise<void> => {
-    throw new Error('not implemented')
+    try {
+      await api.logout()
+    } finally {
+      setUser(null)
+    }
   }
 
   return (
