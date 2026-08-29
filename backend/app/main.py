@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app import account, auth, categories, images, models, outfits, wardrobe
 from app.db import engine
+from app.images import ImageUploadSizeLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Glamouröser Kleiderschrank-Manager", lifespan=lifespan)
+
+app.add_middleware(ImageUploadSizeLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
